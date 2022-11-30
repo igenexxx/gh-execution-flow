@@ -1,4 +1,4 @@
-name: Website Deployment
+name: Use reusable workflow
 on:
   push:
     branches:
@@ -35,12 +35,10 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: Test code
-
-
-        continue-on-error: true
         id: tests-run
         run: npm run test
       - name: Upload test report
+        if: failure() && steps.tests-run.outcome == 'success'
         uses: actions/upload-artifact@v3
         with:
           name: test-report
@@ -70,16 +68,17 @@ jobs:
           path: dist
   deploy:
     needs: build
+    uses: ./.github/workflows/reusable.yml
+    with:
+      artifact_name: dist-files
+    secrets:
+      some-secret: ${{ secrets.SOME_SECRET }}
+  print-deploy-results:
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Get build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: dist-files
-      - name: Output contents
-        run: ls
-      - name: Deploy
-        run: echo "Deploying..."
+      - name: Print deploy results
+        run: echo "Deployed to ${{ needs.deploy.outputs.deploy-url }}"
   report:
     needs: [lint, deploy]
     if: failure()

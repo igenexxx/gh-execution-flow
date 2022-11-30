@@ -1,0 +1,34 @@
+name: Reusable Deploy
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: 'Name of the artifact to deploy'
+        required: true
+        type: string
+        default: string
+    secrets:
+      some-secret:
+        description: 'Some secret'
+        required: true
+    outputs:
+      deploy-url:
+        description: 'URL of the deployed website'
+        value: ${{ jobs.deploy.outputs.deploy-url }}
+jobs:
+  deploy:
+    outputs:
+        deploy-url: ${{ steps.deploy.outputs.deploy-url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.artifact_name }}
+      - name: List files
+        run: ls -l
+      - name: Output information
+        run: echo "Deploying and uploading ..."
+      - name: Output deploy URL
+        id: deploy
+        run: echo "deploy-url=https://example.com" >> $GITHUB_OUTPUT
